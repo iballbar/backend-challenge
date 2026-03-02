@@ -1,0 +1,366 @@
+basePath: /
+definitions:
+  backend-challenge_internal_adapters_http_dto.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 1
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  backend-challenge_internal_adapters_http_dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  backend-challenge_internal_adapters_http_dto.LotterItem:
+    properties:
+      id:
+        type: string
+      number:
+        type: string
+      set:
+        type: integer
+    type: object
+  backend-challenge_internal_adapters_http_dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 1
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  backend-challenge_internal_adapters_http_dto.SearchLotteryResponse:
+    properties:
+      count:
+        type: integer
+      hasNext:
+        type: boolean
+      items:
+        items:
+          $ref: '#/definitions/backend-challenge_internal_adapters_http_dto.LotterItem'
+        type: array
+    type: object
+  backend-challenge_internal_adapters_http_dto.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 1
+        type: string
+    type: object
+  backend-challenge_internal_adapters_http_dto.UserListResponse:
+    properties:
+      total:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/backend-challenge_internal_core_domain.User'
+        type: array
+    type: object
+  backend-challenge_internal_core_domain.User:
+    properties:
+      createdAt:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: bestballs@gmail.com
+    name: iBallbar
+    url: https://github.com/iballbar
+  description: This is a backend challenge API.
+  title: Backend Challenge API
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate with email and password to receive a JWT token for
+        subsequent requests.
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/backend-challenge_internal_adapters_http_dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'token: JWT_TOKEN'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login and get a JWT token
+      tags:
+      - auth
+  /lottery/search:
+    get:
+      description: Search for available lottery tickets using a 6-digit pattern (e.g.,
+        '123***', '******'). Returns a list of matching tickets and a flag indicating
+        if more results are available.
+      parameters:
+      - description: 6-digit pattern (e.g., 123***)
+        in: query
+        name: pattern
+        required: true
+        type: string
+      - description: Number of tickets to return (default 10, max 100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend-challenge_internal_adapters_http_dto.SearchLotteryResponse'
+        "400":
+          description: Invalid pattern
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: No tickets available
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Search lottery tickets
+      tags:
+      - lottery
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with name, email, and password.
+      parameters:
+      - description: User Registration Details
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/backend-challenge_internal_adapters_http_dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/backend-challenge_internal_core_domain.User'
+        "400":
+          description: Invalid input or email already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /users:
+    get:
+      description: Retrieve a list of all registered users.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend-challenge_internal_adapters_http_dto.UserListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: List all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Endpoint for authorized users to create a new user.
+      parameters:
+      - description: New User Details
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/backend-challenge_internal_adapters_http_dto.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/backend-challenge_internal_core_domain.User'
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new user
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      description: Remove a user account permanently.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'status: deleted'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a user
+      tags:
+      - users
+    get:
+      description: Fetch details of a specific user.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend-challenge_internal_core_domain.User'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get user by ID
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: Modify name or email of a user.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Details
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/backend-challenge_internal_adapters_http_dto.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backend-challenge_internal_core_domain.User'
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Update user details
+      tags:
+      - users
+swagger: "2.0"

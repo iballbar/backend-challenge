@@ -1,0 +1,37 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB=backend_challenge
+      - JWT_SECRET=this-is-very-secure-secret-key
+      - ADDRESS=:8080
+    depends_on:
+      - mongo
+    restart: unless-stopped
+    networks:
+      - backend-network
+
+  mongo:
+    image: mongo:8.2.5
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+
+
+networks:
+  backend-network:
+    driver: bridge
